@@ -1,5 +1,5 @@
 ---
-title: "Logistic_regression_Titanic"
+title: "Logistic_regression"
 author: "Marta Ortigas"
 date: "16/11/2022"
 output: html_document
