@@ -1,0 +1,150 @@
+---
+title: "Logistic_regression_Titanic"
+author: "Marta Ortigas"
+date: "16/11/2022"
+output: html_document
+---
+First, we will see if our data fits a logistic regression model. Then, we will
+use logistic regression to find out which explanatory variables are more significant
+in the survival on the Titanic.
+For this part of the project we will need the packages pscl and caret.
+
+To get started, we observe the data:
+```{r}
+head(titanic)
+```
+As we can see, our response variable, survive the Titanic (X2urvived), is binary
+which is perfect when doing a logistic model.
+
+We do a general logistic regression to see which explanatory variables explain
+better our response variable (survival on the Titanic).
+```{r}
+general_logisitc <- glm(X2urvived ~ ., data = titanic, family = "binomial")
+summary(general_logisitc)
+```
+P-values:
+Age: 5.35e-07
+Sex: < 2e-16
+Pclass: 1.06e-15
+
+As we can see, the explanatory variables with a better significance level are Age,
+Sex and Pclass since they have low p-values (we do not count Passengerid because
+is not relevant).
+Also, we get that:
+log(pi/(1-pi)) = 3.2061733 - 0.0343026 * age + 2.2640321 * sex - 0.9859739 * Pclass
+
+To continue, we will see the importance of each predictor in the model using the
+function varImp() from the package caret.
+```{r}
+caret::varImp(general_logisitc)
+```
+Higher values indicate more importance, so the results obtained match up very well
+with the p-values from our model. Being Age, Sex and Pclass good predictors.
+
+Next, we are going to calculate McFadden’s R² to assess how well our model
+fits the data.
+The value ranges from 0 to just under 1, with higher values indicating better model fit.
+```{r}
+pscl::pR2(general_logisitc)["McFadden"]
+```
+Our McFadden’s R² is equal 0.3316875 which means that the logistic model fits
+pretty well our data.
+
+
+Secondly, we will regress our response variable in this explanatory ones and then we will
+use the logit function to determine pi = proportion of 1's (survive/success) at any X.
+
+SURVIVAL & AGE
+```{r}
+logisitc_1 <- glm(X2urvived ~ Age, data = titanic, family = "binomial")
+summary(logisitc_1)
+```
+We get that: log(pi/(1-pi)) = -0.746635 - 0.010059 * age 
+How the age can vary very widely we are not going to compute the probability of
+surviving in each one of the possible ages. 
+
+Now let's plot the fitted logistic model:
+```{r}
+plot(titanic$Age, titanic$X2urvived, xlab = "Age", ylab = "survivance", ylim=c(-0.1,1.1))
+curve(predict(logisitc_1,data.frame(Age=x),type = "resp"),add=TRUE,col="blue",lwd=2)
+points(titanic$Age,fitted(logisitc_1),pch=1,col="blue")
+```
+In blue we have represented the predicted values according to the model logistic_1.
+
+
+
+SURVIVAL & GENDER
+```{r}
+logisitc_2 <- glm(X2urvived ~ Sex, data = titanic, family = "binomial")
+summary(logisitc_2)
+```
+We get that: log(pi/(1-pi)) = -1.9072 + 1.9072 * sex 
+Remember that women = 1, men = 0, so we have that:
+
+For women: 
+log(pi/(1-pi)) = -1.9072 + 1.9072 * 1 = 0 → exp(log(pi/(1-pi))) = exp(0) →
+→ pi/(1-pi) = exp(0) → pi/(1-pi) = 1 → pi = 1(1-pi) → pi = 1-pi >
+→ 2pi = 1 → pi = 1/2 → pi = 0.5
+
+The probability of surviving the Titanic being a woman was 50% .
+
+
+For men:
+log(pi/(1-pi)) = -1.9072 + 1.9072 * 0 = -1.9072 → exp(log(pi/(1-pi))) = exp(-1.9072) →
+→ pi/(1-pi) = exp(-1.9072) → pi/(1-pi) = 0.1484956 → pi = 0.1484956(1-pi) →
+pi = 0.1484956-0.1484956pi → 1.148496pi = 0.1484956 → pi = 0.1484956/1.148496 →
+→ pi = 0.1292957
+
+The probability of surviving the Titanic being a man was 12.93%. Let's say 13%.
+
+Now let's plot the fitted logistic model:
+```{r}
+plot(titanic$Sex, titanic$X2urvived, xlab = "Sex", ylab = "survivance", ylim=c(-0.1,1.1))
+curve(predict(logisitc_2,data.frame(Sex=x),type = "resp"),add=TRUE,col="blue",lwd=2)
+points(titanic$Sex,fitted(logisitc_2),pch=1,col="blue")
+```
+In blue we have represented the predicted values according to the model logistic_2.
+
+
+
+SURVIVAL & CLASS
+```{r}
+logisitc_3 <- glm(X2urvived ~ Pclass, data = titanic, family = "binomial")
+summary(logisitc_3)
+```
+We get that: log(pi/(1-pi)) = 0.37750 - 0.64652 * Pclass 
+Remember that Upper = 1, Middle = 2 and Lower = 3, so we have that:
+
+For Lower class:
+log(pi/(1-pi)) = 0.37750 - 0.64652 * 3 = -1.56206 → exp(log(pi/(1-pi))) = exp(-1.56206) →
+→ pi/(1-pi) = exp(-1.56206) → pi/(1-pi) = 0.2097036 → pi = 0.2097036(1-pi) → 
+→ pi = 0.2097036 - 0.2097036pi → 1.209704pi = 0.2097036 → pi = 0.2097036/1.209704 → 
+→ pi = 0.1733512
+
+The probability of surviving the Titanic traveling in lower class was 17.34%.
+
+
+For Middle class:
+log(pi/(1-pi)) = 0.37750 - 0.64652 * 2 = -0.91554 → exp(log(pi/(1-pi))) = exp(-0.91554) →
+→ pi/(1-pi) = exp(-0.91554) → pi/(1-pi) = 0.4003004 → pi = 0.4003004(1-pi) → 
+→ pi = 0.4003004 - 0.4003004pi → 1.4003pi = 0.4003004 → pi = 0.4003004/1.4003 → 
+→ pi = 0.2858676
+
+The probability of surviving the Titanic traveling in middle class was 28.59%.
+
+
+For Upper class:
+log(pi/(1-pi)) = 0.37750 - 0.64652 * 1 = -0.26902 → exp(log(pi/(1-pi))) = exp(-0.26902) →
+→ pi/(1-pi) = exp(-0.26902) → pi/(1-pi) = 0.764128 → pi = 0.764128(1-pi) → 
+→ pi = 0.764128 - 0.764128pi → 1.764128pi = 0.764128 → pi = 0.764128/1.764128 → 
+→ pi = 0.4331477
+
+The probability of surviving the Titanic traveling in upper class was 43.31%.
+
+Let's plot the fitted logistic model:
+```{r}
+plot(titanic$Pclass, titanic$X2urvived, xlab = "Pclass", ylab = "survivance", ylim=c(-0.1,1.1))
+curve(predict(logisitc_3,data.frame(Pclass=x),type = "resp"),add=TRUE,col="blue",lwd=2)
+points(titanic$Pclass,fitted(logisitc_3),pch=1,col="blue")
+```
+In blue we have represented the predicted values according to the model logistic_3.
