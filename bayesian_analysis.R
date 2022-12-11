@@ -1,10 +1,4 @@
-library(tidyverse)
 library(brms)
-library(ggridges)
-library(shinystan)
-library(bayesplot)
-library(tidybayes)
-library(ggmcmc)
 library(gmodels)
 require(brms)
 
